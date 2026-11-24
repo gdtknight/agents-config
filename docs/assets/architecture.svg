@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 420" width="980" height="420" role="img" aria-labelledby="title desc">
+  <title id="title">Agents Config Architecture</title>
+  <desc id="desc">Cross-vendor SSoT layout syncing shared rules, subagents, skills, MCP servers, and lifecycle hooks to Claude Code, Gemini/Antigravity, and Codex CLI.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#495057" />
+    </marker>
+    <style>
+      .title { font: 700 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #212529; }
+      .group-label { font: 700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+      .node-title { font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1e1e1e; }
+      .node-sub { font: 400 11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; fill: #343a40; }
+      .edge-label { font: 600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #495057; }
+    </style>
+  </defs>
+
+  <!-- Outer card (keeps contrast on both GitHub Light and Dark themes) -->
+  <rect x="8" y="8" width="964" height="404" rx="12" fill="#ffffff" stroke="#dee2e6" stroke-width="1.5" />
+  <text x="490" y="34" text-anchor="middle" class="title">Agents Config — Cross-Vendor SSoT Architecture</text>
+
+  <!-- Group 1: shared/ SSoT -->
+  <rect x="24" y="52" width="238" height="320" rx="10" fill="#f8f9fa" fill-opacity="0.7" stroke="#1971c2" stroke-width="1.2" stroke-dasharray="5,4" />
+  <text x="36" y="72" class="group-label" fill="#1971c2">Single Source of Truth (shared/)</text>
+
+  <rect x="38" y="86" width="210" height="58" rx="8" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1.8" />
+  <text x="143" y="110" text-anchor="middle" class="node-title">INSTRUCTIONS · rules/</text>
+  <text x="143" y="128" text-anchor="middle" class="node-sub">agents/*.md (13 Subagents)</text>
+
+  <rect x="38" y="158" width="210" height="56" rx="8" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1.8" />
+  <text x="143" y="181" text-anchor="middle" class="node-title">shared/skills/</text>
+  <text x="143" y="199" text-anchor="middle" class="node-sub">llm-wiki · graphify</text>
+
+  <rect x="38" y="228" width="210" height="54" rx="8" fill="#d0ebff" stroke="#1971c2" stroke-width="1.8" />
+  <text x="143" y="251" text-anchor="middle" class="node-title">shared/mcp.json</text>
+  <text x="143" y="269" text-anchor="middle" class="node-sub">Canonical MCP Definitions</text>
+
+  <rect x="38" y="296" width="210" height="58" rx="8" fill="#e5dbff" stroke="#6741d9" stroke-width="1.8" />
+  <text x="143" y="320" text-anchor="middle" class="node-title">shared/hooks/hook.py</text>
+  <text x="143" y="338" text-anchor="middle" class="node-sub">Unified Lifecycle Hook</text>
+
+  <!-- Column 2: Sync & Deploy -->
+  <rect x="314" y="114" width="174" height="68" rx="8" fill="#c5f6fa" stroke="#0c8599" stroke-width="1.8" />
+  <text x="401" y="144" text-anchor="middle" class="node-title">install.sh</text>
+  <text x="401" y="162" text-anchor="middle" class="node-sub">Bash 3.2+ Orchestrator</text>
+
+  <rect x="314" y="226" width="174" height="60" rx="8" fill="#c5f6fa" stroke="#0c8599" stroke-width="1.8" />
+  <text x="401" y="252" text-anchor="middle" class="node-title">shared/sync_mcp.py</text>
+  <text x="401" y="270" text-anchor="middle" class="node-sub">Cross-Vendor Renderer</text>
+
+  <!-- Group 3: Vendor Targets -->
+  <rect x="538" y="52" width="206" height="292" rx="10" fill="#f8f9fa" fill-opacity="0.7" stroke="#6741d9" stroke-width="1.2" stroke-dasharray="5,4" />
+  <text x="550" y="72" class="group-label" fill="#6741d9">Vendor Targets</text>
+
+  <rect x="552" y="90" width="178" height="64" rx="8" fill="#e5dbff" stroke="#6741d9" stroke-width="1.8" />
+  <text x="641" y="117" text-anchor="middle" class="node-title">Claude Code</text>
+  <text x="641" y="135" text-anchor="middle" class="node-sub">~/.claude · ~/.claude.json</text>
+
+  <rect x="552" y="174" width="178" height="64" rx="8" fill="#e5dbff" stroke="#6741d9" stroke-width="1.8" />
+  <text x="641" y="201" text-anchor="middle" class="node-title">Gemini / Antigravity</text>
+  <text x="641" y="219" text-anchor="middle" class="node-sub">~/.gemini · config/</text>
+
+  <rect x="552" y="258" width="178" height="64" rx="8" fill="#e5dbff" stroke="#6741d9" stroke-width="1.8" />
+  <text x="641" y="285" text-anchor="middle" class="node-title">Codex CLI</text>
+  <text x="641" y="303" text-anchor="middle" class="node-sub">~/.codex · config.toml</text>
+
+  <!-- Group 4: Runtime Hooks -->
+  <rect x="780" y="52" width="176" height="292" rx="10" fill="#f8f9fa" fill-opacity="0.7" stroke="#c92a2a" stroke-width="1.2" stroke-dasharray="5,4" />
+  <text x="792" y="72" class="group-label" fill="#c92a2a">Runtime Guards &amp; Formatters</text>
+
+  <rect x="794" y="98" width="148" height="86" rx="8" fill="#ffe3e3" stroke="#c92a2a" stroke-width="1.8" />
+  <text x="868" y="124" text-anchor="middle" class="node-title">PreToolUse</text>
+  <text x="868" y="143" text-anchor="middle" class="node-sub">Dangerous Cmd Guard</text>
+  <text x="868" y="160" text-anchor="middle" class="node-sub">Secret &amp; Key Blocker</text>
+
+  <rect x="794" y="216" width="148" height="98" rx="8" fill="#ffe8cc" stroke="#e8590c" stroke-width="1.8" />
+  <text x="868" y="242" text-anchor="middle" class="node-title">PostToolUse</text>
+  <text x="868" y="261" text-anchor="middle" class="node-sub">Docker Formatter</text>
+  <text x="868" y="278" text-anchor="middle" class="node-sub">(skips .excalidraw.md)</text>
+  <text x="868" y="295" text-anchor="middle" class="node-sub">+ macOS Stop Alert</text>
+
+  <!-- Edges: shared/ -> install.sh / sync_mcp.py -->
+  <line x1="248" y1="115" x2="312" y2="138" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <text x="280" y="118" text-anchor="middle" class="edge-label">symlink</text>
+
+  <line x1="248" y1="186" x2="312" y2="160" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <text x="280" y="188" text-anchor="middle" class="edge-label">sync</text>
+
+  <line x1="248" y1="255" x2="312" y2="255" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <text x="280" y="248" text-anchor="middle" class="edge-label">input</text>
+
+  <line x1="401" y1="226" x2="401" y2="184" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <text x="424" y="209" class="edge-label">invoke</text>
+
+  <!-- Edges: install.sh -> Vendor Targets -->
+  <path d="M 488 136 L 514 136 L 514 122 L 550 122" fill="none" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <line x1="488" y1="148" x2="550" y2="206" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <path d="M 488 160 L 514 160 L 514 290 L 550 290" fill="none" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+
+  <!-- Edges: Vendor Targets -> Runtime Hooks -->
+  <line x1="730" y1="122" x2="792" y2="136" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <line x1="730" y1="206" x2="792" y2="152" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+  <line x1="730" y1="290" x2="792" y2="265" stroke="#495057" stroke-width="1.6" marker-end="url(#arrow)" />
+
+  <!-- Edge: hook.py -> Runtime Hooks (bottom channel) -->
+  <path d="M 143 354 L 143 390 L 868 390 L 868 346" fill="none" stroke="#6741d9" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+  <text x="505" y="384" text-anchor="middle" class="edge-label">normalized stdin JSON (toolCall / tool_name)</text>
+</svg>

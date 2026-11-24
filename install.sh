@@ -48,13 +48,8 @@ usage() {
 Usage: ${prog} [OPTIONS] [MODULE...]
 
 Remote One-Line Quickstart:
-  # SDKMAN style
   curl -fsSL ${REMOTE_RAW_URL} | bash
   curl -fsSL ${REMOTE_RAW_URL} | bash -s -- --dry-run
-
-  # Homebrew style
-  /bin/bash -c "\$(curl -fsSL ${REMOTE_RAW_URL})"
-  /bin/bash -c "\$(curl -fsSL ${REMOTE_RAW_URL})" -- --dry-run
 
 Modules:
   agents            Sync MCP and link Claude, Gemini, Codex + ensure CLIs (Default)
