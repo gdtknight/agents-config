@@ -30,22 +30,9 @@
 
 ## 전체 아키텍처
 
-```mermaid
-flowchart LR
-    subgraph SSoT["shared/ (Single Source of Truth)"]
-        Core["INSTRUCTIONS.md · rules/ · agents/ (13)"]
-        Skills["skills/ (graphify · llm-wiki)"]
-        Mcp["mcp.json"]
-        Hook["hooks/hook.py"]
-    end
-
-    Mcp -->|"sync_mcp.py"| Adapters["claude/ · gemini/ · codex/"]
-    Core -->|"install.sh"| Targets["~/.claude · ~/.gemini · ~/.codex"]
-    Skills -->|"install.sh"| Targets
-    Adapters -->|"install.sh"| Targets
-    Hook -->|"PreToolUse"| Guard["보안 가드 · 시크릿 차단"]
-    Hook -->|"PostToolUse"| Fmt["Docker 포매터 (.excalidraw.md 제외)"]
-```
+<p align="center">
+  <img src="./docs/assets/architecture.svg" alt="Agents Config Architecture" width="100%" />
+</p>
 
 - **심화 아키텍처 문서** (C4 Model, 시퀀스 다이어그램, ADR 전체):
   - [docs/ARCHITECTURE.ko.md](./docs/ARCHITECTURE.ko.md)
@@ -57,12 +44,10 @@ flowchart LR
 
 ## 설치 및 사용법
 
-### 원격 원라인 설치 (`curl`)
+### 원격 설치 (`curl`)
 
 > 원격 실행 시 `~/.agents-config`(또는 `AGENTS_CONFIG_DIR`) 경로에 `AGENTS_CONFIG_BRANCH`(기본 `main`) 브랜치를 클론·갱신한 뒤 설치 진행.  
 > 포크·미러 저장소 사용 시 `AGENTS_CONFIG_REMOTE_URL` 환경 변수로 URL 지정 가능.
-
-#### SDKMAN 스타일 (파이프 실행)
 
 - **기본 전체 설치** (MCP 동기화 + 3사 링크 + CLI 설치 확인):
 
@@ -80,20 +65,6 @@ curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/instal
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --skip-cli
-```
-
-#### Homebrew 스타일 (`/bin/bash -c`)
-
-- **기본 전체 설치**:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)"
-```
-
-- **사전 점검 드라이런**:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)" -- --dry-run
 ```
 
 ### 로컬 저장소 실행

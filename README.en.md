@@ -30,22 +30,9 @@ Cross-vendor **Single Source of Truth (SSoT)** for **Claude Code · Gemini CLI /
 
 ## Architecture Overview
 
-```mermaid
-flowchart LR
-    subgraph SSoT["shared/ (Single Source of Truth)"]
-        Core["INSTRUCTIONS.md · rules/ · agents/ (13)"]
-        Skills["skills/ (graphify · llm-wiki)"]
-        Mcp["mcp.json"]
-        Hook["hooks/hook.py"]
-    end
-
-    Mcp -->|"sync_mcp.py"| Adapters["claude/ · gemini/ · codex/"]
-    Core -->|"install.sh"| Targets["~/.claude · ~/.gemini · ~/.codex"]
-    Skills -->|"install.sh"| Targets
-    Adapters -->|"install.sh"| Targets
-    Hook -->|"PreToolUse"| Guard["Security guard & secret blocker"]
-    Hook -->|"PostToolUse"| Fmt["Docker formatter (skips .excalidraw.md)"]
-```
+<p align="center">
+  <img src="./docs/assets/architecture.svg" alt="Agents Config Architecture" width="100%" />
+</p>
 
 - **Deep-dive Architecture Guides** (C4 Model, sequence diagrams, ADRs):
   - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
@@ -57,12 +44,10 @@ flowchart LR
 
 ## Installation & Usage
 
-### Remote One-Line Quickstart (`curl`)
+### Remote Install (`curl`)
 
 > Clones or fast-forwards `AGENTS_CONFIG_BRANCH` (default `main`) into `~/.agents-config` (or `AGENTS_CONFIG_DIR`) before running local setup.  
 > Set `AGENTS_CONFIG_REMOTE_URL` to install from a fork or mirror.
-
-#### SDKMAN Style (Piped Execution)
 
 - **Full setup** (MCP sync + 3-vendor symlinks + CLI checks):
 
@@ -80,20 +65,6 @@ curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/instal
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --skip-cli
-```
-
-#### Homebrew Style (`/bin/bash -c`)
-
-- **Full setup**:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)"
-```
-
-- **Dry-run preview**:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)" -- --dry-run
 ```
 
 ### Local Repository Execution
