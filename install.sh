@@ -5,11 +5,18 @@
 set -euo pipefail
 
 # ------------------------------------------------------------------------------
-# 0. Self-Bootstrapping Guard (for curl/web one-line execution)
+# 0. Bootstrap Configuration & Logging
 # ------------------------------------------------------------------------------
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-}")" 2>/dev/null && pwd || echo "")"
+SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+REPO_DIR=""
+if [ -n "$SCRIPT_PATH" ] && [ -f "$SCRIPT_PATH" ]; then
+  REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")" 2>/dev/null && pwd || echo "")"
+fi
+
 DEFAULT_TARGET_REPO="${AGENTS_CONFIG_DIR:-${HOME}/.agents-config}"
+AGENTS_CONFIG_BRANCH="${AGENTS_CONFIG_BRANCH:-main}"
 AGENTS_CONFIG_REMOTE_URL="${AGENTS_CONFIG_REMOTE_URL:-https://github.com/gdtknight/agents-config.git}"
+REMOTE_RAW_URL="https://raw.githubusercontent.com/gdtknight/agents-config/${AGENTS_CONFIG_BRANCH}/install.sh"
 
 COLOR_RESET="\033[0m"
 COLOR_GREEN="\033[32m"
@@ -23,28 +30,6 @@ log_dry()    { echo -e "${COLOR_YELLOW}[DRY-RUN]${COLOR_RESET} $*"; }
 log_backup() { echo -e "${COLOR_YELLOW}[BACKUP]${COLOR_RESET} $*"; }
 log_warn()   { echo -e "${COLOR_RED}[WARN]${COLOR_RESET} $*"; }
 
-if [ -z "$REPO_DIR" ] || [ ! -f "${REPO_DIR}/shared/INSTRUCTIONS.md" ] || [ ! -f "${REPO_DIR}/shared/mcp.json" ]; then
-  log_info "Running via web bootstrapper. Preparing local repository..."
-
-  if ! command -v git >/dev/null 2>&1; then
-    log_warn "'git' is required to clone agents-config but was not found in PATH."
-    exit 1
-  fi
-
-  if [ -d "${DEFAULT_TARGET_REPO}/.git" ]; then
-    log_info "Existing agents-config repository found at ${DEFAULT_TARGET_REPO}. Pulling latest..."
-    git -C "$DEFAULT_TARGET_REPO" pull --ff-only || true
-  else
-    log_info "Cloning agents-config repository into ${DEFAULT_TARGET_REPO}..."
-    mkdir -p "$(dirname "$DEFAULT_TARGET_REPO")"
-    git clone "$AGENTS_CONFIG_REMOTE_URL" "$DEFAULT_TARGET_REPO"
-    log_ok "Cloned agents-config into ${DEFAULT_TARGET_REPO}"
-  fi
-
-  log_info "Handoff to local installer: ${DEFAULT_TARGET_REPO}/install.sh $*"
-  exec /bin/bash "${DEFAULT_TARGET_REPO}/install.sh" "$@"
-fi
-
 BACKUP_BASE="${HOME}/.agents-config_backups"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 BACKUP_DIR="${BACKUP_BASE}/backup_${TIMESTAMP}"
@@ -54,8 +39,22 @@ FORCE=false
 SKIP_CLI=false
 
 usage() {
+  local prog="install.sh"
+  if [ -n "$SCRIPT_PATH" ] && [ -f "$SCRIPT_PATH" ]; then
+    prog="$(basename "$SCRIPT_PATH")"
+  fi
+
   cat << EOF
-Usage: $(basename "$0") [OPTIONS] [MODULE...]
+Usage: ${prog} [OPTIONS] [MODULE...]
+
+Remote One-Line Quickstart:
+  # SDKMAN style
+  curl -fsSL ${REMOTE_RAW_URL} | bash
+  curl -fsSL ${REMOTE_RAW_URL} | bash -s -- --dry-run
+
+  # Homebrew style
+  /bin/bash -c "\$(curl -fsSL ${REMOTE_RAW_URL})"
+  /bin/bash -c "\$(curl -fsSL ${REMOTE_RAW_URL})" -- --dry-run
 
 Modules:
   agents            Sync MCP and link Claude, Gemini, Codex + ensure CLIs (Default)
@@ -74,15 +73,52 @@ Options:
 
 Environment Variables:
   AGENTS_CONFIG_DIR         Target repository directory (Default: ~/.agents-config)
+  AGENTS_CONFIG_BRANCH      Git branch for remote install (Default: main)
   AGENTS_CONFIG_REMOTE_URL  Git remote used by web bootstrapper
 
 Examples:
-  $(basename "$0") --dry-run
-  $(basename "$0") --dry-run --skip-cli
-  $(basename "$0") claude gemini
-  $(basename "$0") mcp
-  $(basename "$0") formatter
+  ${prog} --dry-run
+  ${prog} --dry-run --skip-cli
+  ${prog} claude gemini
+  ${prog} mcp
+  ${prog} formatter
 EOF
+}
+
+bootstrap_remote_repo() {
+  log_info "Running via web bootstrapper. Preparing local repository..."
+
+  if ! command -v git >/dev/null 2>&1; then
+    if [ "$(uname -s)" = "Darwin" ] && ! xcode-select -p >/dev/null 2>&1; then
+      log_warn "'git' is not installed. Run 'xcode-select --install' first, then retry."
+    else
+      log_warn "'git' is required to clone agents-config but was not found in PATH."
+    fi
+    exit 1
+  fi
+
+  if [ -d "${DEFAULT_TARGET_REPO}/.git" ]; then
+    log_info "Existing agents-config repository found at ${DEFAULT_TARGET_REPO}. Pulling latest..."
+    git -C "$DEFAULT_TARGET_REPO" pull --ff-only || log_warn "Could not fast-forward ${DEFAULT_TARGET_REPO}; continuing with existing checkout."
+  elif [ -e "$DEFAULT_TARGET_REPO" ] && [ -n "$(ls -A "$DEFAULT_TARGET_REPO" 2>/dev/null || true)" ]; then
+    log_warn "Target directory exists and is not a git repo: ${DEFAULT_TARGET_REPO}"
+    log_warn "Move it aside or set AGENTS_CONFIG_DIR to an alternate path."
+    exit 1
+  else
+    log_info "Cloning agents-config (${AGENTS_CONFIG_BRANCH}) into ${DEFAULT_TARGET_REPO}..."
+    mkdir -p "$(dirname "$DEFAULT_TARGET_REPO")"
+    git clone --branch "$AGENTS_CONFIG_BRANCH" --single-branch "$AGENTS_CONFIG_REMOTE_URL" "$DEFAULT_TARGET_REPO"
+    log_ok "Cloned agents-config into ${DEFAULT_TARGET_REPO}"
+  fi
+
+  log_info "Handoff to local installer: ${DEFAULT_TARGET_REPO}/install.sh $*"
+  if [ -t 0 ]; then
+    exec /bin/bash "${DEFAULT_TARGET_REPO}/install.sh" ${1+"$@"}
+  elif (: </dev/tty) 2>/dev/null; then
+    exec /bin/bash "${DEFAULT_TARGET_REPO}/install.sh" ${1+"$@"} </dev/tty
+  else
+    exec /bin/bash "${DEFAULT_TARGET_REPO}/install.sh" ${1+"$@"} </dev/null
+  fi
 }
 
 # ------------------------------------------------------------------------------
@@ -346,58 +382,76 @@ build_formatter() {
 }
 
 # ------------------------------------------------------------------------------
-# Argument Parsing
+# Entrypoint & Argument Parsing
 # ------------------------------------------------------------------------------
-MODULES=()
+main() {
+  if [ -z "$REPO_DIR" ] || [ ! -f "${REPO_DIR}/shared/INSTRUCTIONS.md" ] || [ ! -f "${REPO_DIR}/shared/mcp.json" ]; then
+    local arg
+    for arg in ${1+"$@"}; do
+      case "$arg" in
+        -h|--help)
+          usage
+          exit 0
+          ;;
+      esac
+    done
+    bootstrap_remote_repo ${1+"$@"}
+  fi
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -n|--dry-run)
-      DRY_RUN=true
-      shift
-      ;;
-    -f|--force)
-      FORCE=true
-      shift
-      ;;
-    --skip-cli)
-      SKIP_CLI=true
-      shift
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    agents|claude|gemini|codex|mcp|formatter|docker|all)
-      MODULES+=("$1")
-      shift
-      ;;
-    *)
-      log_warn "Unknown option or module: $1"
-      usage
-      exit 1
-      ;;
-  esac
-done
+  local modules=()
 
-if [ ${#MODULES[@]} -eq 0 ]; then
-  MODULES=("all")
-fi
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -n|--dry-run)
+        DRY_RUN=true
+        shift
+        ;;
+      -f|--force)
+        FORCE=true
+        shift
+        ;;
+      --skip-cli)
+        SKIP_CLI=true
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      agents|claude|gemini|codex|mcp|formatter|docker|all)
+        modules+=("$1")
+        shift
+        ;;
+      *)
+        log_warn "Unknown option or module: $1"
+        usage
+        exit 1
+        ;;
+    esac
+  done
 
-log_info "Starting agents-config installation from: ${REPO_DIR}"
-if [ "$DRY_RUN" = true ]; then
-  log_dry "DRY RUN MODE ENABLED - No changes will be written to disk."
-fi
+  if [ ${#modules[@]} -eq 0 ]; then
+    modules=("all")
+  fi
 
-for mod in "${MODULES[@]}"; do
-  case "$mod" in
-    agents|all)       link_agents ;;
-    claude)           link_claude ;;
-    gemini)           link_gemini ;;
-    codex)            link_codex ;;
-    mcp)              sync_shared_mcp ;;
-    formatter|docker) build_formatter ;;
-  esac
-done
+  log_info "Starting agents-config installation from: ${REPO_DIR}"
+  if [ "$DRY_RUN" = true ]; then
+    log_dry "DRY RUN MODE ENABLED - No changes will be written to disk."
+  fi
 
-log_ok "Completed agents-config installation tasks."
+  local mod
+  for mod in "${modules[@]}"; do
+    case "$mod" in
+      agents|all)       link_agents ;;
+      claude)           link_claude ;;
+      gemini)           link_gemini ;;
+      codex)            link_codex ;;
+      mcp)              sync_shared_mcp ;;
+      formatter|docker) build_formatter ;;
+    esac
+  done
+
+  log_ok "Completed agents-config installation tasks."
+}
+
+main ${1+"$@"}

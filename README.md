@@ -26,6 +26,24 @@ Claude Code, Gemini CLI / Antigravity, Codex CLI 설정·규칙·전문 에이�
 
 ## 설치 및 사용법
 
+### 원격 원라인 설치 (`curl`)
+
+```bash
+# SDKMAN 스타일 (파이프 실행)
+curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --dry-run
+curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --skip-cli
+
+# Homebrew 스타일 (/bin/bash -c)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)" -- --dry-run
+```
+
+- 원격 실행 시 `~/.agents-config`(또는 `AGENTS_CONFIG_DIR`)로 `AGENTS_CONFIG_BRANCH`(기본 `main`) 브랜치를 클론·갱신한 뒤 설치 진행.
+- `AGENTS_CONFIG_REMOTE_URL` 환경 변수로 포크/미러 저장소 URL 지정 가능.
+
+### 로컬 저장소 실행
+
 ```bash
 # 1. 변경 내역 사전 점검 (디스크 변경 없음)
 ./install.sh --dry-run
