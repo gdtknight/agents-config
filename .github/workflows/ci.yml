@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-unit:
+    name: Lint, Schema & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Shell syntax & ShellCheck
+        run: |
+          bash -n install.sh docker/formatter/build.sh
+          shellcheck -S warning install.sh docker/formatter/build.sh
+
+      - name: Compile Python sources
+        run: |
+          python3 -m py_compile \
+            shared/hooks/hook.py \
+            shared/sync_mcp.py \
+            shared/skills/llm-wiki/scripts/excalidraw_gen.py \
+            shared/skills/llm-wiki/scripts/wiki_tool.py
+
+      - name: Validate JSON & Codex TOML configs
+        run: |
+          python3 - << 'PY'
+          import json
+          import tomllib
+          from pathlib import Path
+
+          json_files = [
+              "shared/mcp.json",
+              "claude/settings.json",
+              "gemini/settings.json",
+              "gemini/config.json",
+              "gemini/hooks.json",
+              "gemini/mcp_config.json",
+          ]
+          for path in json_files:
+              json.loads(Path(path).read_text(encoding="utf-8"))
+              print(f"JSON OK: {path}")
+
+          toml_files = [Path("codex/config.toml")] + sorted(Path("codex/agents").glob("*.toml"))
+          for path in toml_files:
+              tomllib.loads(path.read_text(encoding="utf-8"))
+              print(f"TOML OK: {path}")
+          PY
+
+      - name: Run unit test suite
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Lint repository wiki & validate Excalidraw visuals
+        run: |
+          python3 shared/skills/llm-wiki/scripts/wiki_tool.py lint .
+          for f in wiki/visuals/*.excalidraw.md; do
+            python3 shared/skills/llm-wiki/scripts/excalidraw_gen.py validate "$f"
+          done
+
+  installer-matrix:
+    name: Installer Matrix (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify installer dry-run, symlink creation, and idempotency
+        run: |
+          set -euo pipefail
+          TEST_HOME="$(mktemp -d)"
+          trap 'rm -rf "$TEST_HOME"' EXIT
+
+          # 1. Dry-run must not create vendor directories
+          HOME="$TEST_HOME" ./install.sh --dry-run --skip-cli
+          for p in .claude .gemini .codex .claude.json .agents-config_backups; do
+            test ! -e "${TEST_HOME}/${p}"
+          done
+
+          # 2. Full install without CLI downloads
+          HOME="$TEST_HOME" ./install.sh --skip-cli
+          BROKEN_LINKS="$(find "$TEST_HOME" -type l ! -exec test -e {} \; -print)"
+          test -z "$BROKEN_LINKS"
+
+          for skill in graphify llm-wiki; do
+            test -L "${TEST_HOME}/.claude/skills/${skill}"
+            test -L "${TEST_HOME}/.gemini/config/skills/${skill}"
+            test -L "${TEST_HOME}/.codex/skills/${skill}"
+          done
+
+          # 3. Idempotent re-run
+          HOME="$TEST_HOME" ./install.sh --skip-cli
+
+          # 4. Piped --help execution from /tmp must not clone
+          (cd /tmp && cat "${GITHUB_WORKSPACE}/install.sh" | HOME="$TEST_HOME" /bin/bash -s -- --help >/dev/null)
+          test ! -e "${TEST_HOME}/.agents-config"
