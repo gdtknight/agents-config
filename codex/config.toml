@@ -1,0 +1,17 @@
+model = "gpt-6-luna"
+model_reasoning_effort = "medium"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[features]
+multi_agent = true
+
+[tui]
+screen_reader_detection_done = true
+
+# BEGIN AGENTS-CONFIG MANAGED MCP
+# Auto-generated from shared/mcp.json by install.sh / sync_mcp.py
+
+[mcp_servers.graphify]
+url = "https://api.graphify.com/mcp"
+# END AGENTS-CONFIG MANAGED MCP

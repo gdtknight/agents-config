@@ -1,0 +1,28 @@
+# OS & Editor
+.DS_Store
+._*
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.ruff_cache/
+
+# Local overrides & Secrets (Never commit)
+*.local
+*.local.*
+.env
+.env.*
+!.env.example
+oauth_creds.json
+auth.json
+credentials.json
+*.sqlite*
+history.jsonl
+
+# Obsidian local workspace state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache

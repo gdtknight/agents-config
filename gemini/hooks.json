@@ -1,0 +1,35 @@
+{
+  "agents-config-hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${HOME}/.gemini/config/hooks/hook.py\" pre-tool",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${HOME}/.gemini/config/hooks/hook.py\" post-tool",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python3 \"${HOME}/.gemini/config/hooks/hook.py\" stop",
+        "timeout": 5
+      }
+    ]
+  }
+}
