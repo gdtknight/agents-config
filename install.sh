@@ -170,7 +170,7 @@ link_target() {
     fi
 
     local rel_to_home
-    rel_to_home="${dst#$HOME/}"
+    rel_to_home="${dst#"$HOME"/}"
     local backup_target="${BACKUP_DIR}/${rel_to_home}"
     mkdir -p "$(dirname "$backup_target")"
     mv "$dst" "$backup_target"
