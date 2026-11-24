@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Centered title, badges, and quick links in `README.md` and `README.en.md`, split all 16 CLI commands into comment-free single-command code blocks, and restructured dense enumerations into categorized tables and nested lists.
+
 ## [1.0.0] - 2026-11-25
 
 ### Added

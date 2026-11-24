@@ -1,13 +1,19 @@
+<div align="center">
+
 [한국어](./README.md) | **English**
 
 # Agents Config
+
+Cross-vendor **Single Source of Truth (SSoT)** for **Claude Code · Gemini CLI / Antigravity · Codex CLI**
 
 [![CI](https://github.com/gdtknight/agents-config/actions/workflows/ci.yml/badge.svg)](https://github.com/gdtknight/agents-config/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Linux-lightgrey.svg)](#installation--usage)
 [![Vendors](https://img.shields.io/badge/Agents-Claude%20%C2%B7%20Gemini%20%C2%B7%20Codex-6741d9.svg)](#cross-vendor-symlink--mcp-mapping)
 
-A cross-vendor **Single Source of Truth (SSoT)** platform that unifies engineering instructions, rules, 13 specialized subagents, shared skills (`llm-wiki`, `graphify`), lifecycle hooks, and MCP servers across **Claude Code**, **Gemini CLI / Antigravity**, and **Codex CLI**.
+[Architecture Guide (EN)](./docs/ARCHITECTURE.md) · [아키텍처 가이드 (한국어)](./docs/ARCHITECTURE.ko.md) · [Repository Wiki](./wiki/overview.md) · [Security Policy](./SECURITY.md) · [Changelog](./CHANGELOG.md)
+
+</div>
 
 ---
 
@@ -41,8 +47,11 @@ flowchart LR
     Hook -->|"PostToolUse"| Fmt["Docker formatter (skips .excalidraw.md)"]
 ```
 
-- Deep-dive guide (C4 Model, sequence diagrams, ADRs): [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | [docs/ARCHITECTURE.ko.md](./docs/ARCHITECTURE.ko.md)
-- Repository knowledge base (Obsidian + Excalidraw): [wiki/overview.md](./wiki/overview.md)
+- **Deep-dive Architecture Guides** (C4 Model, sequence diagrams, ADRs):
+  - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+  - [docs/ARCHITECTURE.ko.md](./docs/ARCHITECTURE.ko.md)
+- **Repository Knowledge Base** (Obsidian + Excalidraw):
+  - [wiki/overview.md](./wiki/overview.md)
 
 ---
 
@@ -50,42 +59,83 @@ flowchart LR
 
 ### Remote One-Line Quickstart (`curl`)
 
-```bash
-# SDKMAN style (piped execution)
-curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash
-curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --dry-run
-curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --skip-cli
+> Clones or fast-forwards `AGENTS_CONFIG_BRANCH` (default `main`) into `~/.agents-config` (or `AGENTS_CONFIG_DIR`) before running local setup.  
+> Set `AGENTS_CONFIG_REMOTE_URL` to install from a fork or mirror.
 
-# Homebrew style (/bin/bash -c)
+#### SDKMAN Style (Piped Execution)
+
+- **Full setup** (MCP sync + 3-vendor symlinks + CLI checks):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash
+```
+
+- **Dry-run preview** (no filesystem writes):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --dry-run
+```
+
+- **Symlinks and MCP only** (skip CLI installation checks):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh | bash -s -- --skip-cli
+```
+
+#### Homebrew Style (`/bin/bash -c`)
+
+- **Full setup**:
+
+```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)"
+```
+
+- **Dry-run preview**:
+
+```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/install.sh)" -- --dry-run
 ```
 
-- Clones or fast-forwards `AGENTS_CONFIG_BRANCH` (default `main`) into `~/.agents-config` (or `AGENTS_CONFIG_DIR`) before running local setup.
-- Set `AGENTS_CONFIG_REMOTE_URL` to install from a fork or mirror.
-
 ### Local Repository Execution
 
+> Conflicting files or directories are automatically backed up to `~/.agents-config_backups/backup_YYYYMMDD_HHMMSS/` before linking.  
+> Pass `--force` (`-f`) to force relinking existing matching symlinks.
+
+- **Preview changes without touching disk**:
+
 ```bash
-# 1. Preview changes without touching disk
 ./install.sh --dry-run
-
-# 2. Full setup (MCP sync + 3-vendor symlinks + CLI checks)
-./install.sh
-
-# 3. Sync symlinks and MCP only (skip CLI installer checks)
-./install.sh --skip-cli
-
-# 4. Target specific modules
-./install.sh claude gemini
-./install.sh mcp
-
-# 5. Build PostToolUse Docker formatter image (optional)
-./install.sh formatter
 ```
 
-- Conflicting files or directories are automatically backed up to `~/.agents-config_backups/backup_YYYYMMDD_HHMMSS/` before linking.
-- Pass `--force` (`-f`) to force relinking existing matching symlinks.
+- **Full setup (MCP sync + 3-vendor symlinks + CLI checks)**:
+
+```bash
+./install.sh
+```
+
+- **Sync symlinks and MCP only (skip CLI checks)**:
+
+```bash
+./install.sh --skip-cli
+```
+
+- **Target specific vendors**:
+
+```bash
+./install.sh claude gemini
+```
+
+- **Re-sync shared MCP definitions only**:
+
+```bash
+./install.sh mcp
+```
+
+- **Build PostToolUse Docker formatter image (optional)**:
+
+```bash
+./install.sh formatter
+```
 
 ---
 
@@ -104,46 +154,82 @@ curl -fsSL https://raw.githubusercontent.com/gdtknight/agents-config/main/instal
 
 ## Core Capabilities
 
-- **13 Specialized Subagents with Model Tiering**:
-  - Deep reasoning tier (`opus` / `high` / `pro`): `code-reviewer`, `security-reviewer`, `quality-reviewer`, `test-agent`, `debug-agent`, `refactor-agent`, `guide-writer`, `human-writer`
-  - Fast execution tier (`sonnet` / `medium` / `flash`): `unit-test-agent`, `integration-test-agent`, `commit-agent`, `github-agent`, `docs-agent`
-  - `commit-agent` and `github-agent` enforce GitHub Flow branch protection, issue-linked commits (`[#N]` / `- #N`), Milestone & GitHub Project checks, `--body-file` + `shell=False` body safety, and CI-gated issue checkbox synchronization.
-- **Shared Skills (2)**:
-  - `llm-wiki`: Obsidian + Excalidraw 3-layer knowledge base workflow (`raw/` · `wiki/` · [WIKI_SCHEMA.md](./WIKI_SCHEMA.md)) backed by `wiki_tool.py` and `excalidraw_gen.py`
-  - `graphify`: AST & semantic knowledge graph builder and query engine
-- **Unified Lifecycle Hook (`shared/hooks/hook.py`)**:
-  - `PreToolUse`: Blocks destructive commands (`git push --force`, `git reset --hard`, root/home `rm`/`chmod`), `.env`/key file reads/writes, and leaked API token patterns
-  - `PostToolUse`: Runs `agents-config-formatter:latest` or local formatter fallback (automatically skips `.excalidraw.md` and `.excalidraw`)
-  - `Stop`: Sends native macOS notifications (`terminal-notifier` with AppleScript fallback)
+### 1. Specialized Subagents (13 Agents · Model Tiering)
+
+| Category | Deep Reasoning (`opus` / `high` / `pro`) | Fast Execution (`sonnet` / `medium` / `flash`) |
+| :--- | :--- | :--- |
+| **Review** | `code-reviewer`, `security-reviewer`, `quality-reviewer` | — |
+| **Testing** | `test-agent` | `unit-test-agent`, `integration-test-agent` |
+| **Debugging & Refactoring** | `debug-agent`, `refactor-agent` | — |
+| **Docs & Git** | `guide-writer`, `human-writer` | `commit-agent`, `github-agent`, `docs-agent` |
+
+- **Built-in GitHub Flow (`commit-agent`, `github-agent`)**:
+  - Protects `main`/`master` and enforces issue-based branches (`feat/<N>-*`, `fix/<N>-*`)
+  - Formats issue-linked commit titles (`[#N]` default, `- #N` for strict Conventional Commit parsers)
+  - Prevents missing Milestone and GitHub Project metadata (prompts to create when absent)
+  - Enforces `--body-file` + `shell=False` for markdown Issue/PR operations
+  - Runs `gh pr checks` before merge and syncs completed Issue checkboxes (`- [x]`)
+
+### 2. Shared Skills (2)
+
+- **`llm-wiki`** (`shared/skills/llm-wiki/`):
+  - Maintains 3-layer Obsidian + Excalidraw wikis (`raw/`, `wiki/`, [WIKI_SCHEMA.md](./WIKI_SCHEMA.md))
+  - `excalidraw_gen.py`: CJK width sizing, deterministic seeds, `LR`/`TB` auto-layout, bidirectional bindings, and `## Element Links`
+  - `wiki_tool.py`: vault scaffolding (`init`), link/frontmatter/orphan/Excalidraw checks (`lint`), and append-only logs (`log`)
+- **`graphify`** (`shared/skills/graphify/`):
+  - Extracts AST code structures and semantic knowledge graphs with community clustering
+
+### 3. Unified Lifecycle Hook (`shared/hooks/hook.py`)
+
+- **`PreToolUse` (Security Guard)**:
+  - Blocks destructive commands (`git push --force`, `git reset --hard`, `git clean -f`, `git checkout .`/`-f`, `mkfs`, `dd`)
+  - Selectively blocks recursive `rm` and `chmod -R 777` targeting `/`, `~`, or critical system directories
+  - Blocks `.env`/SSH key/credential file access and leaked API token patterns
+- **`PostToolUse` (Auto-Formatter)**:
+  - Runs ephemeral `agents-config-formatter:latest` Docker containers (with local binary fallback)
+  - Automatically skips `.excalidraw.md` and `.excalidraw` files to protect Obsidian blocks
+- **`Stop` (Completion Alerts)**:
+  - Sends native macOS notifications (`terminal-notifier` with AppleScript fallback)
 
 ---
 
 ## Initializing a Personal Obsidian Vault
 
-```bash
-# Scaffold an Obsidian vault with raw/, wiki/, templates/, and WIKI_SCHEMA.md
-python3 shared/skills/llm-wiki/scripts/wiki_tool.py init \
-  "${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents/<VaultName>" \
-  --name "<Wiki Title>" \
-  --domain "<Domain>"
+- **Scaffold a new or existing Obsidian vault with LLM Wiki directories**:
 
-# Validate frontmatter, wikilinks, index coverage, and Excalidraw schemas
-python3 shared/skills/llm-wiki/scripts/wiki_tool.py lint \
-  "${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents/<VaultName>"
+```bash
+python3 shared/skills/llm-wiki/scripts/wiki_tool.py init "${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents/<VaultName>" --name "<Wiki Title>" --domain "<Domain>"
+```
+
+- **Validate frontmatter, wikilinks, index coverage, and Excalidraw schemas**:
+
+```bash
+python3 shared/skills/llm-wiki/scripts/wiki_tool.py lint "${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents/<VaultName>"
 ```
 
 ---
 
 ## Testing & CI Verification
 
-```bash
-# Stdlib unit & integration test suite (17 test cases)
-python3 -m unittest discover -s tests -v
+- **Run unit & integration test suite (Python stdlib, 17 cases)**:
 
-# Shell syntax, wiki lint & Excalidraw schema validation
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+- **Check shell syntax**:
+
+```bash
 bash -n install.sh docker/formatter/build.sh
+```
+
+- **Lint repository wiki**:
+
+```bash
 python3 shared/skills/llm-wiki/scripts/wiki_tool.py lint .
 ```
 
-- GitHub Actions ([ci.yml](./.github/workflows/ci.yml)) runs 3 jobs on every push and PR: `Lint, Schema & Unit Tests` plus `Installer Matrix` across `ubuntu-latest` and `macos-latest`.
-- License: [MIT License](./LICENSE)
+- **CI Pipeline** ([ci.yml](./.github/workflows/ci.yml)):
+  - `Lint, Schema & Unit Tests` (`ubuntu-latest`): `shellcheck`, `bash -n`, `py_compile`, JSON/TOML validation, `unittest`, `wiki_tool.py lint`, and `excalidraw_gen.py validate`
+  - `Installer Matrix` (`ubuntu-latest`, `macos-latest`): isolated-`HOME` dry-run, install, idempotency, and piped `--help` verification
+- **License**: [MIT License](./LICENSE)
